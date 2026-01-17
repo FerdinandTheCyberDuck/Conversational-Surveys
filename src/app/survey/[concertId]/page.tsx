@@ -50,7 +50,11 @@ export default function SurveyPage({ params }: { params: Promise<{ concertId: st
 
   // Handle form submission
   const handleFormSubmit = async (formData: ParticipantFormData) => {
-    if (!concert) return;
+    console.log('handleFormSubmit called', formData);
+    if (!concert) {
+      console.log('No concert data');
+      return;
+    }
 
     setIsCreatingConversation(true);
 
@@ -62,6 +66,8 @@ export default function SurveyPage({ params }: { params: Promise<{ concertId: st
         piecesToDiscuss: formData.piecesToDiscuss,
       };
 
+      console.log('Creating conversation...', { concertId, participant: participantData });
+
       // Create conversation in database
       const response = await fetch('/api/conversation', {
         method: 'POST',
@@ -72,17 +78,23 @@ export default function SurveyPage({ params }: { params: Promise<{ concertId: st
         }),
       });
 
+      console.log('Response status:', response.status);
+
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Response error:', errorText);
         throw new Error('Failed to create conversation');
       }
 
       const { conversationId: newConversationId } = await response.json();
+      console.log('Conversation created:', newConversationId);
       setConversationId(newConversationId);
       setParticipant(participantData);
       setPageState('chat');
     } catch (err) {
       console.error('Failed to start conversation:', err);
       setErrorMessage('Failed to start the conversation. Please try again.');
+      setPageState('error');
     } finally {
       setIsCreatingConversation(false);
     }
